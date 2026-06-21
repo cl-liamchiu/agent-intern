@@ -54,5 +54,30 @@ module.exports = function init(projectName) {
     console.log(`Added remote "agent" → ${agentDir}`);
   }
 
+  // Step 5: write Claude sandbox settings into the agent folder
+  const claudeDir = path.join(agentDir, '.claude');
+  fs.mkdirSync(claudeDir, { recursive: true });
+  const sandboxSettings = {
+    sandbox: {
+      enabled: true,
+      autoAllowBashIfSandboxed: true,
+      allowUnsandboxedCommands: false,
+      filesystem: {
+        denyWrite: ['~'],
+        denyRead: ['~'],
+        allowWrite: ['.'],
+        allowRead: ['.'],
+      },
+      network: {
+        allowedDomains: [],
+      },
+    },
+  };
+  fs.writeFileSync(
+    path.join(claudeDir, 'settings.local.json'),
+    JSON.stringify(sandboxSettings, null, 2)
+  );
+  console.log('Created .claude/settings.local.json with sandbox config');
+
   console.log('\nDone. Agent mirror ready.');
 };
