@@ -1,0 +1,15 @@
+{
+  "name": "agent-pilot",
+  "version": "1.0.0",
+  "description": "CLI for managing agent git mirrors",
+  "bin": {
+    "agent": "./bin/agent.js"
+  },
+  "scripts": {
+    "link": "npm link"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "commander": "^12.0.0"
+  }
+}
