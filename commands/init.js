@@ -82,9 +82,9 @@ module.exports = function init(projectName) {
   // Step 6: exclude .claude/ from git tracking via .git/info/exclude (local, never committed)
   const excludePath = path.join(agentDir, '.git', 'info', 'exclude');
   const excludeContent = fs.existsSync(excludePath) ? fs.readFileSync(excludePath, 'utf8') : '';
-  if (!excludeContent.includes('.claude/')) {
-    fs.appendFileSync(excludePath, (excludeContent.endsWith('\n') || excludeContent === '' ? '' : '\n') + '.claude/\n');
-    console.log('Added .claude/ to agent mirror .git/info/exclude');
+  if (!excludeContent.includes('.claude/settings.local.json')) {
+    fs.appendFileSync(excludePath, (excludeContent.endsWith('\n') || excludeContent === '' ? '' : '\n') + '.claude/settings.local.json\n');
+    console.log('Added .claude/settings.local.json to agent mirror .git/info/exclude');
   }
 
   console.log('\nDone. Agent mirror ready.');
