@@ -10,6 +10,7 @@ const bugCommit = require('../commands/bug/commit');
 const bugCommitInit = require('../commands/bug/commitInit');
 const bugFix = require('../commands/bug/fix');
 const bugFixInit = require('../commands/bug/fixInit');
+const bugList = require('../commands/bug/list');
 
 const program = new Command();
 
@@ -30,6 +31,8 @@ branch
   .action(update);
 
 const bugCmd = program.command('bug').description('Manage bugs');
+
+bugCmd.command('list').description('List all bugs and their statuses').action(bugList);
 
 const fetchCmd = bugCmd.command('fetch').description('Fetch bugs from your tracker and store them locally');
 fetchCmd.command('init <scriptPath>').description('Register the script used to fetch bugs').action(bugFetchInit);
