@@ -4,29 +4,29 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-module.exports = function init(projectName) {
+module.exports = function init(projectArg) {
   const cwd = process.cwd();
-  const projectDir = path.resolve(cwd, projectName);
+  const projectDir = path.resolve(cwd, projectArg);
   const name = path.basename(projectDir);
   const agentDir = path.resolve(path.dirname(projectDir), `${name}-agent`);
 
   // Step 1: check project folder exists and has git
   if (!fs.existsSync(projectDir)) {
-    console.error(`Error: folder "${projectName}" not found in ${cwd}`);
+    console.error(`Error: folder "${name}" not found in ${cwd}`);
     process.exit(1);
   }
 
   if (!fs.existsSync(path.join(projectDir, '.git'))) {
-    console.error(`Error: "${projectName}" is not a git repository`);
+    console.error(`Error: "${name}" is not a git repository`);
     process.exit(1);
   }
 
-  // Step 2: create {projectName}-agent folder if it doesn't exist
+  // Step 2: create {name}-agent folder if it doesn't exist
   if (!fs.existsSync(agentDir)) {
     fs.mkdirSync(agentDir, { recursive: true });
-    console.log(`Created ${projectName}-agent/`);
+    console.log(`Created ${name}-agent/`);
   } else {
-    console.log(`Folder ${projectName}-agent/ already exists, skipping creation`);
+    console.log(`Folder ${name}-agent/ already exists, skipping creation`);
   }
 
   // Step 3: git init and configure in the agent folder
@@ -36,7 +36,7 @@ module.exports = function init(projectName) {
   if (!fs.existsSync(path.join(agentDir, '.git'))) {
     run(['init'], agentDir);
   } else {
-    console.log(`${projectName}-agent/ already a git repo, skipping git init`);
+    console.log(`${name}-agent/ already a git repo, skipping git init`);
   }
 
   run(['config', 'receive.denyCurrentBranch', 'updateInstead'], agentDir);
