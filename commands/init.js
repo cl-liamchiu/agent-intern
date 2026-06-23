@@ -7,7 +7,8 @@ const { execFileSync } = require('child_process');
 module.exports = function init(projectName) {
   const cwd = process.cwd();
   const projectDir = path.resolve(cwd, projectName);
-  const agentDir = path.resolve(cwd, `${projectName}-agent`);
+  const name = path.basename(projectDir);
+  const agentDir = path.resolve(path.dirname(projectDir), `${name}-agent`);
 
   // Step 1: check project folder exists and has git
   if (!fs.existsSync(projectDir)) {
