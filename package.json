@@ -1,7 +1,7 @@
 {
-  "name": "agent-pilot",
+  "name": "agent-intern",
   "version": "1.0.0",
-  "description": "CLI for managing agent git mirrors",
+  "description": "Let an AI agent fix bugs while you review and approve like a senior dev",
   "bin": {
     "agent": "./bin/agent.js"
   },
