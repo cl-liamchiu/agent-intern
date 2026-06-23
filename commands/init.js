@@ -88,5 +88,5 @@ module.exports = function init(projectArg) {
     console.log('Added .claude/settings.local.json to agent mirror .git/info/exclude');
   }
 
-  console.log('\nDone. Agent mirror ready.');
+  console.log(`\nDone. Agent mirror ready at: ${agentDir}`);
 };
