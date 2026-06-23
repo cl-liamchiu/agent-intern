@@ -69,6 +69,8 @@ module.exports = function fix(bugIds, options, cwd) {
 
     console.log(`\nFixing ${bug.id}: ${bug.title}`);
 
+    db.prepare("UPDATE bugs SET status = 'in-progress' WHERE id = ?").run(bug.id);
+
     // 1. Push base branch to agent
     update(baseBranch, {}, projectDir);
 

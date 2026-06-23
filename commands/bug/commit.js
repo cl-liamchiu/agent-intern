@@ -95,4 +95,6 @@ module.exports = function commit(bugId, options, cwd) {
   }
 
   execFileSync('git', ['commit', '-m', commitMessage], { cwd, stdio: 'inherit' });
+
+  db.prepare("UPDATE bugs SET status = 'review' WHERE id = ?").run(bugId);
 };
