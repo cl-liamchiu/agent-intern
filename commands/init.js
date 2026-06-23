@@ -79,5 +79,13 @@ module.exports = function init(projectName) {
   );
   console.log('Created .claude/settings.local.json with sandbox config');
 
+  // Step 6: exclude .claude/ from git tracking via .git/info/exclude (local, never committed)
+  const excludePath = path.join(agentDir, '.git', 'info', 'exclude');
+  const excludeContent = fs.existsSync(excludePath) ? fs.readFileSync(excludePath, 'utf8') : '';
+  if (!excludeContent.includes('.claude/')) {
+    fs.appendFileSync(excludePath, (excludeContent.endsWith('\n') || excludeContent === '' ? '' : '\n') + '.claude/\n');
+    console.log('Added .claude/ to agent mirror .git/info/exclude');
+  }
+
   console.log('\nDone. Agent mirror ready.');
 };
