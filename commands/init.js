@@ -59,6 +59,9 @@ module.exports = function init(projectArg) {
   const claudeDir = path.join(agentDir, '.claude');
   fs.mkdirSync(claudeDir, { recursive: true });
   const sandboxSettings = {
+    permissions: {
+      allow: ['Read', 'Edit', 'Write'],
+    },
     sandbox: {
       enabled: true,
       autoAllowBashIfSandboxed: true,
