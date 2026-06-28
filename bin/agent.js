@@ -13,6 +13,7 @@ const bugFixInit = require('../commands/bug/fixInit');
 const bugList = require('../commands/bug/list');
 const bugReview = require('../commands/bug/review');
 const bugStatus = require('../commands/bug/status');
+const bugClose = require('../commands/bug/close');
 
 const program = new Command();
 
@@ -37,6 +38,11 @@ const bugCmd = program.command('bug').description('Manage bugs');
 bugCmd.command('list').description('List all bugs and their statuses').action(bugList);
 bugCmd.command('review <bugId>').description('Fetch fix branch from agent mirror and check it out locally').action(bugReview);
 bugCmd.command('status <bugId> <status>').description('Set bug status (todo, in-progress, review, done, rejected)').action(bugStatus);
+bugCmd
+  .command('close <bugId>')
+  .description('Rebase fix branch onto base and fast-forward merge into it')
+  .option('--base <branch>', 'Base branch to merge into')
+  .action(bugClose);
 
 const fetchCmd = bugCmd.command('fetch').description('Fetch bugs from your tracker and store them locally');
 fetchCmd.command('init <scriptPath>').description('Register the script used to fetch bugs').action(bugFetchInit);
