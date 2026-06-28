@@ -2,33 +2,34 @@
 
 Let an AI agent fix bugs while you review and approve like a senior dev.
 
-The idea is simple: instead of writing fixes yourself, you delegate bug fixing to an AI agent working in an isolated git mirror. You only see the diff and the commit message — and decide whether to merge or reject.
+Instead of writing fixes yourself, you delegate bug fixing to Claude working in an isolated git mirror. You review the diff, then merge or reject — just like reviewing a junior dev's PR.
+
+## Installation
+
+```bash
+npm install -g cl-liamchiu/agent-intern
+```
+
+**Requirements:** [Claude Code](https://claude.ai/code) CLI (`claude`) must be installed and authenticated.
 
 ---
 
 ## How it works
 
 ```
-Your project  ──push──▶  project-agent/  ◀── Claude fixes bugs here
-                                │
-                          sandboxed, isolated
-                                │
-                         fix/main/JIRA-404
-                                │
-                    You review the diff and decide
+your-project/          ← you work here
+your-project-agent/    ← Claude works here (sandboxed mirror)
+~/.agent-pilot/
+  your-project/
+    config.json        ← registered scripts and prompts
+    bugs.db            ← SQLite: bugs + agent activity logs
 ```
 
-- The AI works in a separate `{project}-agent/` folder, sandboxed to only touch files within it
-- Each bug gets its own branch (`fix/<base>/<bugId>`)
-- You review the branch like any other PR — approve or reject
-
----
-
-## Installation
-
-```bash
-npm install -g agent-intern
-```
+1. `agent init` creates a sandboxed git mirror next to your project
+2. `agent bug fetch` pulls bugs from your tracker into a local SQLite DB
+3. `agent bug fix` pushes a branch to the mirror, runs Claude to fix the bug, and commits
+4. `agent bug review` checks out the fix branch locally so you can inspect it
+5. `agent bug close` rebases and fast-forward merges the fix into your base branch
 
 ---
 
@@ -36,70 +37,91 @@ npm install -g agent-intern
 
 ### 1. Initialize the agent mirror
 
-Run this from the parent directory of your project:
+Run from the **parent directory** of your project, or pass any path form:
 
 ```bash
-agent init <projectName>
+agent init your-project      # from parent dir
+agent init .                 # from inside the project
+agent init ~/path/to/project # absolute path
 ```
 
-This will:
-- Create `{projectName}-agent/` as a sandboxed git mirror
-- Add a git remote named `agent` in your project pointing to it
-- Write `.claude/settings.local.json` with sandbox config into the agent folder
+This creates `your-project-agent/` as a sandboxed git mirror and adds an `agent` remote in your project.
 
-### 2. Register your bug fetch script
+### 2. Write a bug fetch script
 
-Write a script that fetches bugs from your tracker (Jira, Linear, GitHub Issues, etc.) and prints a JSON array to stdout:
+Write a script that fetches bugs from your tracker and prints a JSON array to stdout:
 
 ```json
 [
-  { "id": "JIRA-404", "title": "Cart button broken", "description": "..." },
-  { "id": "GITHUB-22", "title": "API returns 500", "description": "..." }
+  { "id": "GITHUB-1", "title": "Button broken", "description": "..." },
+  { "id": "JIRA-42",  "title": "API returns 500", "description": "..." }
 ]
 ```
 
-Then register it from inside your project folder:
+Example using GitHub Issues:
 
 ```bash
-cd my-project
+#!/bin/bash
+gh issue list --repo your-org/your-repo --state open --json number,title,body \
+  --jq '[.[] | {id: ("GITHUB-" + (.number | tostring)), title: .title, description: .body}]'
+```
+
+Register it from inside your project:
+
+```bash
 agent bug fetch init ./fetch-bugs.sh
 ```
 
-### 3. (Optional) Configure commit and fix prompts
+### 3. (Optional) Customize prompts
 
 ```bash
-agent bug commit init --prompt ./prompts/commit.txt --script ./scripts/format-commit.sh
+# Custom prompt for fixing bugs
 agent bug fix init --prompt ./prompts/fix.txt
+
+# Custom prompt and/or transform script for commit messages
+agent bug commit init --prompt ./prompts/commit.txt --script ./scripts/format-commit.sh
 ```
 
-- `--prompt` — path to a text file used as the Claude prompt (uses a sensible default if omitted)
-- `--script` (commit only) — a script that transforms Claude's response into the final commit message
+- `--prompt` — path to a text file used as the Claude prompt
+- `--script` (commit only) — a script that receives Claude's response on stdin and outputs the final commit message
 
 ---
 
 ## Daily workflow
 
 ```bash
-# 1. Sync bugs from your tracker
+# 1. Pull bugs from your tracker
 agent bug fetch
 
-# 2. Let the agent fix everything
+# 2. Check what's in the queue
+agent bug list
+
+# 3. Fix all todo bugs against a branch
 agent bug fix --all --base main
 
-# 3. Review each fix branch and merge or reject
-git log fix/main/JIRA-404
-git diff main..fix/main/JIRA-404
+# 4. Review each fix
+agent bug review GITHUB-1
+
+# 5. Inspect the diff
+git diff main..fix/main/GITHUB-1
+
+# 6. Merge if happy, or reject
+agent bug close GITHUB-1 --base main   # merges + marks done
+agent bug status GITHUB-1 rejected     # mark as rejected
 ```
 
 ---
 
-## Commands
+## Command reference
 
-### `agent init <projectName>`
-Initialize an agent mirror for an existing git project.
+### `agent init <path>`
+Initialize a sandboxed agent mirror for a project. `<path>` can be a project name, `.`, or an absolute path.
 
 ### `agent branch update [branchName]`
 Push a branch from your project to the agent mirror. Defaults to the current branch.
+
+### `agent bug list`
+Print a table of all bugs and their statuses.
 
 ### `agent bug fetch init <scriptPath>`
 Register the script used to fetch bugs from your tracker.
@@ -107,37 +129,34 @@ Register the script used to fetch bugs from your tracker.
 ### `agent bug fetch`
 Run the fetch script and upsert results into the local bug database.
 
-### `agent bug commit init [--prompt <path>] [--script <path>]`
-Configure the Claude prompt and optional transform script for commits.
-
-### `agent bug commit <bugId> [--resume <sessionId>]`
-Commit staged changes in the current directory using Claude to generate the commit message.
-
-### `agent bug fix init --prompt <path>`
-Configure the Claude prompt used when fixing bugs.
-
 ### `agent bug fix [bugIds...] --base <branch>`
 Fix one or more bugs with Claude. For each bug:
 1. Pushes `<branch>` to the agent mirror
-2. Creates `fix/<branch>/<bugId>` in the agent folder
-3. Runs Claude to fix the bug
-4. Commits with an AI-generated message
-5. Switches back to `<branch>`
+2. Creates `fix/<branch>/<bugId>` in the mirror
+3. Runs Claude to apply the fix
+4. Commits with a Claude-generated message
+5. Sets bug status to `review`
 
 ### `agent bug fix --all --base <branch>`
 Fix all bugs with status `todo`.
 
----
+### `agent bug fix init --prompt <path>`
+Set a custom prompt file for the fix step.
 
-## Data storage
+### `agent bug review <bugId>`
+Fetch the fix branch from the agent mirror and check it out locally for inspection.
 
-All data is stored outside your project — nothing is added to your repo.
+### `agent bug close <bugId> --base <branch>`
+Rebase the fix branch onto `<branch>`, fast-forward merge it in, and mark the bug as `done`.
 
-```
-~/.agent-pilot/<projectName>/
-├── config.json   ← registered scripts and prompt paths
-└── bugs.db       ← SQLite: bugs + agent activity logs
-```
+### `agent bug status <bugId> <status>`
+Manually set a bug's status. Valid values: `todo`, `in-progress`, `review`, `done`, `rejected`.
+
+### `agent bug commit <bugId> [--resume <sessionId>]`
+Commit staged changes in the current directory using Claude to generate the commit message.
+
+### `agent bug commit init [--prompt <path>] [--script <path>]`
+Configure the Claude prompt and optional transform script for commit messages.
 
 ---
 
@@ -146,8 +165,8 @@ All data is stored outside your project — nothing is added to your repo.
 | Status | Meaning |
 |--------|---------|
 | `todo` | Fetched, not yet fixed |
-| `in-progress` | Being worked on |
-| `review` | Fix ready for review |
+| `in-progress` | Claude is working on it |
+| `review` | Fix committed, ready for review |
 | `done` | Merged |
 | `rejected` | Fix rejected |
 
