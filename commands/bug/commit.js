@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const { getAgentDir } = require('../../lib/paths');
@@ -20,7 +21,10 @@ module.exports = function commit(bugId, options, cwd) {
     }
   }
 
-  const { prompt: commitPrompt, transform } = require(path.join(getAgentDir(cwd), 'commit.js'));
+  const dataDir = getAgentDir(cwd);
+  const commitPrompt = fs.readFileSync(path.join(dataDir, 'prompts', 'commit.md'), 'utf8');
+  const postCommitPath = path.join(dataDir, 'hooks', 'post-commit.js');
+  const postCommit = fs.existsSync(postCommitPath) ? require(postCommitPath) : null;
 
   const db = getDb(cwd);
   const bug = db.prepare('SELECT * FROM bugs WHERE id = ?').get(bugId);
@@ -35,10 +39,7 @@ module.exports = function commit(bugId, options, cwd) {
 
   let rawOutput;
   try {
-    rawOutput = execFileSync('claude', claudeArgs, {
-      encoding: 'utf8',
-      cwd,
-    });
+    rawOutput = execFileSync('claude', claudeArgs, { encoding: 'utf8', cwd });
   } catch (err) {
     console.error(`Error running claude: ${err.message}`);
     process.exit(1);
@@ -58,9 +59,7 @@ module.exports = function commit(bugId, options, cwd) {
   `).run(bugId, claudeResult.session_id ?? null, claudeResult.total_cost_usd ?? null, rawOutput);
 
   // 3. Derive commit message
-  const commitMessage = typeof transform === 'function'
-    ? transform(claudeResult.result)
-    : claudeResult.result;
+  const commitMessage = (postCommit ? postCommit(claudeResult.result) : claudeResult.result);
 
   if (!commitMessage) {
     console.error('Error: could not derive a commit message from claude response');

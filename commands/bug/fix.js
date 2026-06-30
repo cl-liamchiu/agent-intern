@@ -18,7 +18,7 @@ module.exports = function fix(bugIds, options, cwd) {
     process.exit(1);
   }
 
-  const fixPrompt = require(path.join(getAgentDir(cwd), 'fix.js'));
+  const fixPromptTemplate = fs.readFileSync(path.join(getAgentDir(cwd), 'prompts', 'fix.md'), 'utf8');
 
   const db = getDb(cwd);
 
@@ -74,7 +74,10 @@ module.exports = function fix(bugIds, options, cwd) {
     }
 
     // 3. Run claude to fix the bug
-    const prompt = typeof fixPrompt === 'function' ? fixPrompt(bug) : fixPrompt;
+    const prompt = fixPromptTemplate
+      .replace('{{bug.id}}', bug.id)
+      .replace('{{bug.title}}', bug.title)
+      .replace('{{bug.description}}', bug.description || 'No description provided.');
     const claudeArgs = ['-p', prompt, '--output-format', 'json'];
 
     let rawOutput;

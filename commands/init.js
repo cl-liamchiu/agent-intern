@@ -100,19 +100,22 @@ module.exports = function init(projectArg) {
     console.log('Added .agent-intern/ to project .git/info/exclude');
   }
 
-  // Step 8: initialize .agent-intern/ with JS config files and bug DB
+  // Step 8: initialize .agent-intern/ with hooks, prompts, and bug DB
   const dataDir = path.join(projectDir, '.agent-intern');
-  fs.mkdirSync(dataDir, { recursive: true });
+  const hooksDir = path.join(dataDir, 'hooks');
+  const promptsDir = path.join(dataDir, 'prompts');
+  fs.mkdirSync(hooksDir, { recursive: true });
+  fs.mkdirSync(promptsDir, { recursive: true });
 
   const templates = {
-    'fetch.js': `'use strict';
+    'hooks/pre-fetch.js': `'use strict';
 
-// Fetch bugs from your tracker and return them as an array.
+// Return an array of bugs from your tracker.
 // Each bug must have: { id: string, title: string, description?: string }
 //
 // Example using GitHub Issues:
 // const { execFileSync } = require('child_process');
-// module.exports = async function fetchBugs() {
+// module.exports = async function preFetch() {
 //   const output = execFileSync('gh', [
 //     'issue', 'list',
 //     '--repo', 'your-org/your-repo',
@@ -126,36 +129,30 @@ module.exports = function init(projectArg) {
 //   }));
 // };
 
-module.exports = async function fetchBugs() {
-  throw new Error('Not configured. Edit .agent-intern/fetch.js to fetch bugs from your tracker.');
+module.exports = async function preFetch() {
+  throw new Error('Not configured. Edit .agent-intern/hooks/pre-fetch.js to fetch bugs from your tracker.');
 };
 `,
-    'fix.js': `'use strict';
+    'hooks/post-commit.js': `'use strict';
 
-// Prompt sent to Claude when fixing a bug.
-// Export a string, or a function(bug) => string for dynamic prompts.
+// Optional: transform Claude's raw commit message response into the final commit message.
+// Remove this export (or return null) to use Claude's response as-is.
 
-module.exports = function fixPrompt(bug) {
-  return \`Fix the following bug by modifying the appropriate code files.
+module.exports = function postCommit(response) {
+  return response.trim();
+};
+`,
+    'prompts/fix.md': `Fix the following bug by modifying the appropriate code files.
 
-Bug ID: \${bug.id}
-Title: \${bug.title}
+Bug ID: {{bug.id}}
+Title: {{bug.title}}
 
 Description:
-\${bug.description || 'No description provided.'}\`;
-};
+{{bug.description}}
 `,
-    'commit.js': `'use strict';
+    'prompts/commit.md': `Look at the staged changes and write a concise commit message that describes what was fixed and why.
 
-// Prompt sent to Claude when generating a commit message.
-// Optionally export a transform function to post-process Claude's response.
-
-module.exports = {
-  prompt: 'Look at the staged changes and write a concise commit message that describes what was fixed and why.',
-
-  // Optional: transform Claude's response into the final commit message.
-  // transform: (response) => response.trim(),
-};
+Keep the subject line under 72 characters. Use the imperative mood (e.g. "Fix", "Add", "Remove").
 `,
   };
 

@@ -6,7 +6,7 @@ const { getAgentDir } = require('../../lib/paths');
 
 module.exports = function fetch() {
   const cwd = process.cwd();
-  const fetchFn = require(path.join(getAgentDir(cwd), 'fetch.js'));
+  const fetchFn = require(path.join(getAgentDir(cwd), 'hooks', 'pre-fetch.js'));
 
   Promise.resolve(fetchFn()).then(bugs => {
     if (!Array.isArray(bugs)) {
