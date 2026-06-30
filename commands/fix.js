@@ -3,8 +3,8 @@
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { getAgentDir, resolveProjectAndAgent } = require('../../lib/paths');
-const { getDb } = require('../../lib/db');
+const { getAgentDir, resolveProjectAndAgent } = require('../lib/paths');
+const { getDb } = require('../lib/db');
 const commit = require('./commit');
 
 module.exports = function fix(bugIds, options, cwd) {

@@ -1,7 +1,7 @@
 'use strict';
 
 const { execFileSync } = require('child_process');
-const { getDb } = require('../../lib/db');
+const { getDb } = require('../lib/db');
 
 module.exports = function close(bugId, options) {
   const cwd = process.cwd();

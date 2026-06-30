@@ -1,6 +1,6 @@
 'use strict';
 
-const { getDb } = require('../../lib/db');
+const { getDb } = require('../lib/db');
 
 module.exports = function list() {
   const db = getDb(process.cwd());

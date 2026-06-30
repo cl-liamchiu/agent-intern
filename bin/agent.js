@@ -3,13 +3,13 @@
 
 const { Command } = require('commander');
 const init = require('../commands/init');
-const fetch = require('../commands/bug/fetch');
-const commit = require('../commands/bug/commit');
-const fix = require('../commands/bug/fix');
-const list = require('../commands/bug/list');
-const review = require('../commands/bug/review');
-const status = require('../commands/bug/status');
-const close = require('../commands/bug/close');
+const fetch = require('../commands/fetch');
+const commit = require('../commands/commit');
+const fix = require('../commands/fix');
+const list = require('../commands/list');
+const review = require('../commands/review');
+const status = require('../commands/status');
+const close = require('../commands/close');
 
 const program = new Command();
 

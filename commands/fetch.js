@@ -1,8 +1,8 @@
 'use strict';
 
 const path = require('path');
-const { getDb } = require('../../lib/db');
-const { getAgentDir } = require('../../lib/paths');
+const { getDb } = require('../lib/db');
+const { getAgentDir } = require('../lib/paths');
 
 module.exports = function fetch() {
   const cwd = process.cwd();
