@@ -8,8 +8,6 @@ const { getDb } = require('../../lib/db');
 const commit = require('./commit');
 const update = require('../update');
 
-const DEFAULT_FIX_PROMPT = 'Fix the following bug by modifying the appropriate code files.';
-
 module.exports = function fix(bugIds, options, cwd) {
   if (typeof cwd !== 'string') cwd = process.cwd();
 
@@ -20,12 +18,7 @@ module.exports = function fix(bugIds, options, cwd) {
     process.exit(1);
   }
 
-  const configPath = path.join(getAgentDir(cwd), 'config.json');
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-
-  const prompt = config.fix?.promptPath
-    ? fs.readFileSync(config.fix.promptPath, 'utf8').trim()
-    : DEFAULT_FIX_PROMPT;
+  const fixPrompt = require(path.join(getAgentDir(cwd), 'fix.js'));
 
   const db = getDb(cwd);
 
@@ -52,7 +45,6 @@ module.exports = function fix(bugIds, options, cwd) {
     });
   }
 
-  // Resolve base branch
   const baseBranch = options.base;
   if (!baseBranch) {
     console.error('Error: --base <branch> is required');
@@ -82,13 +74,12 @@ module.exports = function fix(bugIds, options, cwd) {
     }
 
     // 3. Run claude to fix the bug
+    const prompt = typeof fixPrompt === 'function' ? fixPrompt(bug) : fixPrompt;
     const claudeArgs = ['-p', prompt, '--output-format', 'json'];
-    const stdinInput = `Bug ID: ${bug.id}\nTitle: ${bug.title}\n\nDescription:\n${bug.description || ''}`;
 
     let rawOutput;
     try {
       rawOutput = execFileSync('claude', claudeArgs, {
-        input: stdinInput,
         encoding: 'utf8',
         cwd: agentDir,
         stdio: ['pipe', 'pipe', 'inherit'],

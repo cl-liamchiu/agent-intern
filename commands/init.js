@@ -100,14 +100,71 @@ module.exports = function init(projectArg) {
     console.log('Added .agent-intern/ to project .git/info/exclude');
   }
 
-  // Step 8: initialize .agent-intern/ with config.json and bug DB
+  // Step 8: initialize .agent-intern/ with JS config files and bug DB
   const dataDir = path.join(projectDir, '.agent-intern');
   fs.mkdirSync(dataDir, { recursive: true });
 
-  const configPath = path.join(dataDir, 'config.json');
-  if (!fs.existsSync(configPath)) {
-    fs.writeFileSync(configPath, JSON.stringify({}, null, 2));
-    console.log('Created .agent-intern/config.json');
+  const templates = {
+    'fetch.js': `'use strict';
+
+// Fetch bugs from your tracker and return them as an array.
+// Each bug must have: { id: string, title: string, description?: string }
+//
+// Example using GitHub Issues:
+// const { execFileSync } = require('child_process');
+// module.exports = async function fetchBugs() {
+//   const output = execFileSync('gh', [
+//     'issue', 'list',
+//     '--repo', 'your-org/your-repo',
+//     '--state', 'open',
+//     '--json', 'number,title,body',
+//   ]);
+//   return JSON.parse(output).map(issue => ({
+//     id: \`GITHUB-\${issue.number}\`,
+//     title: issue.title,
+//     description: issue.body,
+//   }));
+// };
+
+module.exports = async function fetchBugs() {
+  throw new Error('Not configured. Edit .agent-intern/fetch.js to fetch bugs from your tracker.');
+};
+`,
+    'fix.js': `'use strict';
+
+// Prompt sent to Claude when fixing a bug.
+// Export a string, or a function(bug) => string for dynamic prompts.
+
+module.exports = function fixPrompt(bug) {
+  return \`Fix the following bug by modifying the appropriate code files.
+
+Bug ID: \${bug.id}
+Title: \${bug.title}
+
+Description:
+\${bug.description || 'No description provided.'}\`;
+};
+`,
+    'commit.js': `'use strict';
+
+// Prompt sent to Claude when generating a commit message.
+// Optionally export a transform function to post-process Claude's response.
+
+module.exports = {
+  prompt: 'Look at the staged changes and write a concise commit message that describes what was fixed and why.',
+
+  // Optional: transform Claude's response into the final commit message.
+  // transform: (response) => response.trim(),
+};
+`,
+  };
+
+  for (const [filename, content] of Object.entries(templates)) {
+    const filePath = path.join(dataDir, filename);
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, content);
+      console.log(`Created .agent-intern/${filename}`);
+    }
   }
 
   getDb(projectDir);
