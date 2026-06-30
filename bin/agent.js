@@ -3,57 +3,50 @@
 
 const { Command } = require('commander');
 const init = require('../commands/init');
-const update = require('../commands/update');
-const bugFetch = require('../commands/bug/fetch');
-const bugCommit = require('../commands/bug/commit');
-const bugFix = require('../commands/bug/fix');
-const bugList = require('../commands/bug/list');
-const bugReview = require('../commands/bug/review');
-const bugStatus = require('../commands/bug/status');
-const bugClose = require('../commands/bug/close');
+const fetch = require('../commands/bug/fetch');
+const commit = require('../commands/bug/commit');
+const fix = require('../commands/bug/fix');
+const list = require('../commands/bug/list');
+const review = require('../commands/bug/review');
+const status = require('../commands/bug/status');
+const close = require('../commands/bug/close');
 
 const program = new Command();
 
 program
   .name('agent')
-  .description('Manage agent git mirrors for your projects')
+  .description('Let an AI agent fix bugs while you review and approve')
   .version('1.0.0');
 
 program
-  .command('init <projectName>')
-  .description('Initialize an agent git mirror for an existing project')
+  .command('init <project>')
+  .description('Initialize an agent mirror for an existing project')
   .action(init);
 
-const branch = program.command('branch').description('Manage branches in the agent mirror');
-branch
-  .command('update [branchName]')
-  .description('Push a branch to the agent mirror (defaults to current branch)')
-  .action(update);
+program.command('list').description('List all bugs and their statuses').action(list);
+program.command('fetch').description('Fetch bugs from your tracker').action(fetch);
 
-const bugCmd = program.command('bug').description('Manage bugs');
-
-bugCmd.command('list').description('List all bugs and their statuses').action(bugList);
-bugCmd.command('review <bugId>').description('Fetch fix branch from agent mirror and check it out locally').action(bugReview);
-bugCmd.command('status <bugId> <status>').description('Set bug status (todo, in-progress, review, done, rejected)').action(bugStatus);
-bugCmd
-  .command('close <bugId>')
-  .description('Rebase fix branch onto base and fast-forward merge into it')
-  .option('--base <branch>', 'Base branch to merge into')
-  .action(bugClose);
-
-bugCmd.command('fetch').description('Fetch bugs from your tracker and store them locally').action(bugFetch);
-
-bugCmd
-  .command('commit <bugId>')
-  .description('Commit staged changes using Claude')
-  .option('--resume <sessionId>', 'Resume a Claude session')
-  .action(bugCommit);
-
-bugCmd
+program
   .command('fix [bugIds...]')
   .description('Fix bugs using Claude')
   .option('--base <branch>', 'Base branch to branch off from')
   .option('-a, --all', 'Fix all bugs with status "todo"')
-  .action(bugFix);
+  .action(fix);
+
+program.command('review <bugId>').description('Check out a fix branch locally for inspection').action(review);
+
+program
+  .command('close <bugId>')
+  .description('Rebase and fast-forward merge a fix branch into the base branch')
+  .option('--base <branch>', 'Base branch to merge into')
+  .action(close);
+
+program.command('status <bugId> <status>').description('Set bug status (todo, in-progress, review, done, rejected)').action(status);
+
+program
+  .command('commit <bugId>')
+  .description('Commit staged changes using Claude')
+  .option('--resume <sessionId>', 'Resume a Claude session')
+  .action(commit);
 
 program.parse(process.argv);
