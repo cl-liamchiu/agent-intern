@@ -6,7 +6,6 @@ const { execFileSync } = require('child_process');
 const { getAgentDir, resolveProjectAndAgent } = require('../../lib/paths');
 const { getDb } = require('../../lib/db');
 const commit = require('./commit');
-const update = require('../update');
 
 module.exports = function fix(bugIds, options, cwd) {
   if (typeof cwd !== 'string') cwd = process.cwd();
@@ -62,7 +61,7 @@ module.exports = function fix(bugIds, options, cwd) {
     db.prepare("UPDATE bugs SET status = 'in-progress' WHERE id = ?").run(bug.id);
 
     // 1. Push base branch to agent
-    update(baseBranch, {}, projectDir);
+    execFileSync('git', ['push', 'agent', baseBranch], { cwd: projectDir, stdio: 'inherit' });
 
     // 2. Create fix branch in agent dir
     const fixBranch = `fix/${baseBranch}/${bug.id}`;
