@@ -7,7 +7,7 @@ module.exports = function list() {
   const bugs = db.prepare('SELECT id, title, status, created_at FROM bugs ORDER BY created_at ASC').all();
 
   if (bugs.length === 0) {
-    console.log('No bugs found. Run "agent bug fetch" first.');
+    console.log('No bugs found. Run "agent fetch" first.');
     return;
   }
 
