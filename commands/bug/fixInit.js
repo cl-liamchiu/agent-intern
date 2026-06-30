@@ -19,9 +19,7 @@ module.exports = function fixInit(options) {
   }
 
   const configPath = path.join(getAgentDir(cwd), 'config.json');
-  const config = fs.existsSync(configPath)
-    ? JSON.parse(fs.readFileSync(configPath, 'utf8'))
-    : {};
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
   (config.fix ??= {}).promptPath = resolved;
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));

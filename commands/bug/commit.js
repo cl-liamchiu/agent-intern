@@ -26,9 +26,7 @@ module.exports = function commit(bugId, options, cwd) {
 
   const agentDir = getAgentDir(cwd);
   const configPath = path.join(agentDir, 'config.json');
-  const config = fs.existsSync(configPath)
-    ? JSON.parse(fs.readFileSync(configPath, 'utf8'))
-    : {};
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
   const db = getDb(cwd);
   const bug = db.prepare('SELECT * FROM bugs WHERE id = ?').get(bugId);

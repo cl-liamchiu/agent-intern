@@ -7,9 +7,7 @@ const { getAgentDir } = require('../../lib/paths');
 module.exports = function commitInit(options) {
   const cwd = process.cwd();
   const configPath = path.join(getAgentDir(cwd), 'config.json');
-  const config = fs.existsSync(configPath)
-    ? JSON.parse(fs.readFileSync(configPath, 'utf8'))
-    : {};
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
   if (options.prompt) {
     const resolved = path.resolve(cwd, options.prompt);
