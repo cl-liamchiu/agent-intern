@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
+const { getDb } = require('../lib/db');
 
 module.exports = function init(projectArg) {
   const cwd = process.cwd();
@@ -98,6 +99,19 @@ module.exports = function init(projectArg) {
     fs.appendFileSync(projectExcludePath, (projectExcludeContent.endsWith('\n') || projectExcludeContent === '' ? '' : '\n') + '.agent-intern/\n');
     console.log('Added .agent-intern/ to project .git/info/exclude');
   }
+
+  // Step 8: initialize .agent-intern/ with config.json and bug DB
+  const dataDir = path.join(projectDir, '.agent-intern');
+  fs.mkdirSync(dataDir, { recursive: true });
+
+  const configPath = path.join(dataDir, 'config.json');
+  if (!fs.existsSync(configPath)) {
+    fs.writeFileSync(configPath, JSON.stringify({}, null, 2));
+    console.log('Created .agent-intern/config.json');
+  }
+
+  getDb(projectDir);
+  console.log('Initialized .agent-intern/bugs.db');
 
   console.log(`\nDone. Agent mirror ready at: ${agentDir}`);
 };
