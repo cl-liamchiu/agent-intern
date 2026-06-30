@@ -17,12 +17,11 @@ npm install -g cl-liamchiu/agent-intern
 ## How it works
 
 ```
-your-project/          ← you work here
-your-project-agent/    ← Claude works here (sandboxed mirror)
-~/.agent-pilot/
-  your-project/
+your-project/
+  .agent-intern/       ← config and bug database (git-excluded)
     config.json        ← registered scripts and prompts
     bugs.db            ← SQLite: bugs + agent activity logs
+your-project-agent/    ← Claude works here (sandboxed mirror)
 ```
 
 1. `agent init` creates a sandboxed git mirror next to your project
@@ -45,7 +44,7 @@ agent init .                 # from inside the project
 agent init ~/path/to/project # absolute path
 ```
 
-This creates `your-project-agent/` as a sandboxed git mirror and adds an `agent` remote in your project.
+This creates `your-project-agent/` as a sandboxed git mirror, adds an `agent` remote in your project, and creates `.agent-intern/` for local config and bug data (automatically git-excluded).
 
 ### 2. Write a bug fetch script
 

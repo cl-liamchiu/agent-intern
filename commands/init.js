@@ -83,12 +83,20 @@ module.exports = function init(projectArg) {
   );
   console.log('Created .claude/settings.local.json with sandbox config');
 
-  // Step 6: exclude .claude/ from git tracking via .git/info/exclude (local, never committed)
-  const excludePath = path.join(agentDir, '.git', 'info', 'exclude');
-  const excludeContent = fs.existsSync(excludePath) ? fs.readFileSync(excludePath, 'utf8') : '';
-  if (!excludeContent.includes('.claude/settings.local.json')) {
-    fs.appendFileSync(excludePath, (excludeContent.endsWith('\n') || excludeContent === '' ? '' : '\n') + '.claude/settings.local.json\n');
+  // Step 6: exclude .claude/settings.local.json from agent mirror git tracking
+  const agentExcludePath = path.join(agentDir, '.git', 'info', 'exclude');
+  const agentExcludeContent = fs.existsSync(agentExcludePath) ? fs.readFileSync(agentExcludePath, 'utf8') : '';
+  if (!agentExcludeContent.includes('.claude/settings.local.json')) {
+    fs.appendFileSync(agentExcludePath, (agentExcludeContent.endsWith('\n') || agentExcludeContent === '' ? '' : '\n') + '.claude/settings.local.json\n');
     console.log('Added .claude/settings.local.json to agent mirror .git/info/exclude');
+  }
+
+  // Step 7: exclude .agent-intern/ from project git tracking
+  const projectExcludePath = path.join(projectDir, '.git', 'info', 'exclude');
+  const projectExcludeContent = fs.existsSync(projectExcludePath) ? fs.readFileSync(projectExcludePath, 'utf8') : '';
+  if (!projectExcludeContent.includes('.agent-intern/')) {
+    fs.appendFileSync(projectExcludePath, (projectExcludeContent.endsWith('\n') || projectExcludeContent === '' ? '' : '\n') + '.agent-intern/\n');
+    console.log('Added .agent-intern/ to project .git/info/exclude');
   }
 
   console.log(`\nDone. Agent mirror ready at: ${agentDir}`);
